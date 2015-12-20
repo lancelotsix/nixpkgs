@@ -202,6 +202,20 @@ in
         description = "Verbatim contents of <filename>sshd_config</filename>.";
       };
 
+      package = cfgc.package;
+
+      extraPackages = mkOption {
+        type = types.listOf types.package;
+        default = [];
+        description = ''
+          List of paths availalble when connecting. '/bin' and '/usr/bin' are
+          always present.
+        '';
+        example = literalExample ''
+          [ pkgs.rsync ]
+        '';
+      };
+
       moduliFile = mkOption {
         example = "services.openssh.moduliFile = /etc/my-local-ssh-moduli;";
         type = types.path;
@@ -223,14 +237,16 @@ in
 
   ###### implementation
 
-  config = mkIf cfg.enable {
+  config =  
+    let openssh = (cfgc.package.override { extraPaths = cfg.extraPackages; });
+    in mkIf cfg.enable {
 
     users.extraUsers.sshd =
       { isSystemUser = true;
         description = "SSH privilege separation user";
       };
 
-    services.openssh.moduliFile = mkDefault "${cfgc.package}/etc/ssh/moduli";
+    services.openssh.moduliFile = mkDefault "${openssh}/etc/ssh/moduli";
 
     environment.etc = authKeysFiles //
       { "ssh/moduli".source = cfg.moduliFile; };
@@ -244,7 +260,7 @@ in
 
             stopIfChanged = false;
 
-            path = [ cfgc.package pkgs.gawk ];
+            path = [ openssh pkgs.gawk ];
 
             environment.LD_LIBRARY_PATH = nssModulesPath;
 
@@ -261,7 +277,7 @@ in
 
             serviceConfig =
               { ExecStart =
-                  "${cfgc.package}/sbin/sshd " + (optionalString cfg.startWhenNeeded "-i ") +
+                  "${openssh}/sbin/sshd " + (optionalString cfg.startWhenNeeded "-i ") +
                   "-f ${pkgs.writeText "sshd_config" cfg.extraConfig}";
                 KillMode = "process";
               } // (if cfg.startWhenNeeded then {
@@ -332,7 +348,7 @@ in
         ''}
 
         ${optionalString cfg.allowSFTP ''
-          Subsystem sftp ${cfgc.package}/libexec/sftp-server
+          Subsystem sftp ${openssh}/libexec/sftp-server
         ''}
 
         PermitRootLogin ${cfg.permitRootLogin}

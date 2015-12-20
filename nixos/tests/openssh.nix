@@ -33,6 +33,38 @@ in {
         users.extraUsers.root.openssh.authorizedKeys.keys = [
           snakeOilPublicKey
         ];
+        users.extraUsers.testuser = {
+          openssh.authorizedKeys.keys = [
+            snakeOilPublicKey
+          ];
+          home = "/home/testuser";
+          createHome = true;
+          isNormalUser = true;
+          shell = "${pkgs.zsh}/bin/zsh";
+        };
+        environment.systemPackages = [ pkgs.rsync ];
+      };
+
+    server_with_extrapath =
+      { config, pkgs, ... }: {
+        services.openssh = {
+          enable = true;
+          extraPackages = [ pkgs.rsync ];
+        };
+        security.pam.services.sshd.limits =
+          [ { domain = "*"; item = "memlock"; type = "-"; value = 1024; } ];
+        users.extraUsers.root.openssh.authorizedKeys.keys = [
+          snakeOilPublicKey
+        ];
+        users.extraUsers.testuser = {
+          openssh.authorizedKeys.keys = [
+            snakeOilPublicKey
+          ];
+          home = "/home/testuser";
+          createHome = true;
+          isNormalUser = true;
+          shell = "${pkgs.zsh}/bin/zsh";
+        };
       };
 
     client =
@@ -67,5 +99,26 @@ in {
                        " -o StrictHostKeyChecking=no -i privkey.snakeoil" .
                        " server true");
     };
+
+    $server_with_extrapath->waitForUnit("sshd");
+    subtest "call_rsync_over_ssh", sub {
+      $server_with_extrapath->succeed("mkdir -m 700 /home/testuser/.ssh");
+      $server_with_extrapath->copyFileFromHost("key.pub", "/home/testuser/.ssh/authorized_keys");
+
+      # testuser, who uses zsh as shell, cannot call rsync over ssh directly without
+      # an interactive shell
+      $client->fail("ssh -o UserKnownHostsFile=/dev/null" .
+                    " -o StrictHostKeyChecking=no -i privkey.snakeoil" .
+                    " -l testuser server 'rsync --version'");
+      # If he explicitely sources /etc/profile and set-up the environment, it goes fine
+      $client->succeed("ssh -o UserKnownHostsFile=/dev/null" .
+                       " -o StrictHostKeyChecking=no -i privkey.snakeoil" .
+                       " -l testuser server 'source /etc/profile && rsync --version'");
+      # If openssh is built with default path, there is no need to source /etc/profile to
+      # have the desired programs as soon as the ssh session is started.
+      $client->succeed("ssh -o UserKnownHostsFile=/dev/null" .
+                       " -o StrictHostKeyChecking=no -i privkey.snakeoil" .
+                       " -l testuser server_with_extrapath 'rsync --version'");
+    }
   '';
 })
