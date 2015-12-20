@@ -3,6 +3,7 @@
 , hpnSupport ? false
 , withKerberos ? false
 , kerberos
+, extraPaths ? [ ]
 }:
 
 assert withKerberos -> kerberos != null;
@@ -33,7 +34,7 @@ stdenv.mkDerivation rec {
   patches = [ ./locale_archive.patch ./openssh-6.9p1-security-7.0.patch];
 
   buildInputs = [ zlib openssl libedit pkgconfig pam ]
-    ++ optional withKerberos [ kerberos ];
+    ++ optional withKerberos [ kerberos ] ++ extraPaths;
 
   # I set --disable-strip because later we strip anyway. And it fails to strip
   # properly when cross building.
@@ -45,7 +46,11 @@ stdenv.mkDerivation rec {
     (if pam != null then "--with-pam" else "--without-pam")
   ] ++ optional (etcDir != null) "--sysconfdir=${etcDir}"
     ++ optional withKerberos "--with-kerberos5=${kerberos}"
-    ++ optional stdenv.isDarwin "--disable-libutil";
+    ++ optional stdenv.isDarwin "--disable-libutil"
+    ++ optional (extraPaths != [ ]) (concatStrings ([ "--with-default-path="
+                                                    ] ++ (intersperse ":" ([ "/bin" # for /bin/sh
+                                                                             "/usr/bin" # for /usr/bin/env
+                                                                           ] ++ map (p : "${p}/bin") extraPaths))));
 
   preConfigure = ''
     configureFlagsArray+=("--with-privsep-path=$out/empty")
