@@ -9264,6 +9264,25 @@ in modules // {
     };
   };
 
+  django_raster = buildPythonPackage rec {
+    name = "django-raster-${version}";
+    version = "0.2";
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/d/django-raster/${name}.tar.gz";
+      sha256 = "1zdcxzj43qrv7cl6q9nb2dkfnsyn74dzf2igpnd6nbbfdnkif9bm";
+    };
+
+    propagatedBuildInputs = with self ; [ numpy django_colorful pillow psycopg2
+                                          pyparsing django celery ];
+
+    meta = {
+      description = "Basic raster data integration for Django";
+      homepage = https://github.com/geodesign/django-raster;
+      license = licenses.mit;
+    };
+  };
+
   django_redis = buildPythonPackage rec {
     name = "django-redis-${version}";
     version = "4.2.0";
