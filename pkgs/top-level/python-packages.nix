@@ -598,11 +598,11 @@ in modules // {
 
 
   alembic = buildPythonPackage rec {
-    name = "alembic-0.8.3";
+    name = "alembic-0.8.7";
 
     src = pkgs.fetchurl {
       url = "mirror://pypi/a/alembic/${name}.tar.gz";
-      sha256 = "1sgwvwylzd5h14130mwr0cbyy0fil0a1bq0d0ki97wqvkic3db7f";
+      sha256 = "0ias6fdzwr2s220fnjspkdgm9510bd0cnap0hx5y4zy4srba9f3z";
     };
 
     buildInputs = with self; [ pytest pytestcov mock coverage ];
