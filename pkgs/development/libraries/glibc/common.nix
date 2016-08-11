@@ -11,8 +11,8 @@ cross:
 
 let
 
-  version = "2.23";
-  sha256 = "1lk9a8jv5kyx8hp0wmfzjyk047q95ybyjqbyw5idl7414jxqml1b";
+  version = "2.24";
+  sha256 = "1ghzp41ryvsqxn4rhrm8r25wc33m2jf8zrcc1pj3jxyk8ad9a0by";
 in
 
 assert cross != null -> gccCross != null;
@@ -49,12 +49,6 @@ stdenv.mkDerivation ({
          "/bin:/usr/bin", which is inappropriate on NixOS machines. This
          patch extends the search path by "/run/current-system/sw/bin". */
       ./fix_path_attribute_in_getconf.patch
-
-      ./cve-2016-3075.patch
-      ./glob-simplify-interface.patch
-      ./cve-2016-1234.patch
-      ./cve-2016-3706.patch
-      ./fix_warnings.patch
     ];
 
   postPatch =
