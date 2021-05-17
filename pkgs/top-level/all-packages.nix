@@ -18233,6 +18233,12 @@ in
 
   xlslib = callPackage ../development/libraries/xlslib { };
 
+  xtl = callPackage ../development/libraries/xtl { };
+
+  xtensor = callPackage ../development/libraries/xtensor { };
+
+  xtensor-blas = callPackage ../development/libraries/xtensor-blas { };
+
   xsimd = callPackage ../development/libraries/xsimd { };
 
   xvidcore = callPackage ../development/libraries/xvidcore { };
